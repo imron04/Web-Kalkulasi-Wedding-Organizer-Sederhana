@@ -7,32 +7,26 @@ function kirimPesanKeWA() {
   const namaInput = document.getElementById("nama-pemesan").value.trim();
   const nomorInput = document.getElementById("nomor-hp").value.trim();
 
-  // Validasi awal
   if (cartItems.length === 0 || namaInput === "" || nomorInput === "") {
     alert("Pastikan layanan, nama, dan nomor HP sudah diisi!");
     return;
   }
 
-  // Susun string layanan
   let layanan = "";
   cartItems.forEach(item => {
     layanan += `(${item.quantity}x) ${item.name} - $${(item.price * item.quantity).toFixed(2)}\n`;
   });
 
-  const url = "https://script.google.com/macros/s/AKfycb.../exec" +
-    `?nama=${encodeURIComponent(namaInput)}&nomor=${encodeURIComponent(nomorInput)}&layanan=${encodeURIComponent(layanan)}&total=${encodeURIComponent(totalAmount.toFixed(2))}`;
+  document.getElementById("form-nama").value = namaInput;
+  document.getElementById("form-nomor").value = nomorInput;
+  document.getElementById("form-layanan").value = layanan;
+  document.getElementById("form-total").value = totalAmount.toFixed(2);
 
-  fetch(url)
-    .then(response => response.json())
-    .then(result => {
-      console.log("Data berhasil dikirim:", result);
-      alert("Data berhasil dikirim ke Google Sheets!");
-    })
-    .catch(error => {
-      console.error("Gagal kirim data:", error);
-      alert("Gagal mengirim data ke Google Sheets.");
-    });
+  const form = document.getElementById("kirim-form");
+  form.action = "https://script.google.com/macros/s/AKfycb.../exec";
+  form.submit(); // buka tab baru kirim data
 }
+
 
 
 // Semua event dan fungsi DOM dimasukkan setelah dokumen siap
