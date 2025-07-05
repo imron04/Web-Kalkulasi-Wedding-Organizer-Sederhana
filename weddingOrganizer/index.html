@@ -222,12 +222,12 @@
     <h5>Total</h5>
     <div class="cart-total">$0.00</div>
   </div>
-  <form id="kirim-form" method="GET" target="_blank">
+  <form id="kirim-form" onsubmit="return false;">
   <input type="hidden" name="nama" id="form-nama">
   <input type="hidden" name="nomor" id="form-nomor">
   <input type="hidden" name="layanan" id="form-layanan">
   <input type="hidden" name="total" id="form-total">
-  <button type="submit" id="kirim-btn">Kirim</button>
+  <button type="button" id="kirim-btn">Kirim</button>
 </form>
 </div>
 
