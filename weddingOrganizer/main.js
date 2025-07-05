@@ -7,42 +7,33 @@ function kirimPesanKeWA() {
   const namaInput = document.getElementById("nama-pemesan").value.trim();
   const nomorInput = document.getElementById("nomor-hp").value.trim();
 
-  let layanan = "";
-cartItems.forEach(item => {
-  layanan += `(${item.quantity}x) ${item.name} - $${(item.price * item.quantity).toFixed(2)}\n`;
-});
-
-  // Validasi sederhana
+  // Validasi awal
   if (cartItems.length === 0 || namaInput === "" || nomorInput === "") {
     alert("Pastikan layanan, nama, dan nomor HP sudah diisi!");
     return;
   }
 
-  // Susun payload yang aman (tanpa harga)
-  const payload = {
-    nama: namaInput,
-    nomor: nomorInput,
-    cart: cartItems.map(item => ({
-      name: item.name,
-      quantity: item.quantity
-    }))
-  };
-
-  // Kirim ke Google Apps Script
- const url = "https://script.google.com/macros/s/AKfycbx.../exec" +
-  `?nama=${encodeURIComponent(namaInput)}&nomor=${encodeURIComponent(nomorInput)}&layanan=${encodeURIComponent(layanan)}&total=${encodeURIComponent(totalAmount.toFixed(2))}`;
-
-fetch(url)
-  .then(response => response.json())
-  .then(result => {
-    console.log("Data berhasil dikirim:", result);
-    alert("Data berhasil dikirim ke Google Sheets!");
-  })
-  .catch(error => {
-    console.error("Gagal kirim data:", error);
-    alert("Gagal mengirim data ke Google Sheets.");
+  // Susun string layanan
+  let layanan = "";
+  cartItems.forEach(item => {
+    layanan += `(${item.quantity}x) ${item.name} - $${(item.price * item.quantity).toFixed(2)}\n`;
   });
+
+  const url = "https://script.google.com/macros/s/AKfycb.../exec" +
+    `?nama=${encodeURIComponent(namaInput)}&nomor=${encodeURIComponent(nomorInput)}&layanan=${encodeURIComponent(layanan)}&total=${encodeURIComponent(totalAmount.toFixed(2))}`;
+
+  fetch(url)
+    .then(response => response.json())
+    .then(result => {
+      console.log("Data berhasil dikirim:", result);
+      alert("Data berhasil dikirim ke Google Sheets!");
+    })
+    .catch(error => {
+      console.error("Gagal kirim data:", error);
+      alert("Gagal mengirim data ke Google Sheets.");
+    });
 }
+
 
 // Semua event dan fungsi DOM dimasukkan setelah dokumen siap
 document.addEventListener('DOMContentLoaded', () => {
