@@ -4,8 +4,9 @@ let totalAmount = 0;
 
 // Fungsi kirim WhatsApp
 function kirimPesanKeWA() {
-  const namaInput = document.getElementById("user-name").value.trim();
-  const nomorInput = document.getElementById("user-phone").value.trim();
+ const namaInput = document.getElementById("nama-pemesan").value.trim();
+const nomorInput = document.getElementById("nomor-hp").value.trim();
+
 
   // Validasi sederhana
   if (cartItems.length === 0 || namaInput === "" || nomorInput === "") {
