@@ -24,21 +24,18 @@ function kirimPesanKeWA() {
   };
 
   // Kirim ke Google Apps Script
-  fetch("https://script.google.com/macros/s/AKfycbx90i4i_OmAtwGkfXDWaeIU6KfIYCEqxe0ra33pBXzBqKkvWm4uiAF9JMETvgyR576c/exec", {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: {
-      "Content-Type": "application/json"
-    }
+ const url = "https://script.google.com/macros/s/AKfycbx.../exec" +
+  `?nama=${encodeURIComponent(namaInput)}&nomor=${encodeURIComponent(nomorInput)}&layanan=${encodeURIComponent(layanan)}&total=${encodeURIComponent(totalAmount.toFixed(2))}`;
+
+fetch(url)
+  .then(response => response.json())
+  .then(result => {
+    console.log("Data berhasil dikirim:", result);
+    alert("Data berhasil dikirim ke Google Sheets!");
   })
-  .then(res => res.text())
-  .then(text => {
-    alert("Pesanan berhasil dikirim!\n" + text);
-    // Bisa redirect ke WhatsApp kalau mau, atau tunggu konfirmasi dulu
-  })
-  .catch(err => {
-    console.error("Gagal kirim data:", err);
-    alert("Gagal kirim pesanan. Silakan coba lagi.");
+  .catch(error => {
+    console.error("Gagal kirim data:", error);
+    alert("Gagal mengirim data ke Google Sheets.");
   });
 }
 
