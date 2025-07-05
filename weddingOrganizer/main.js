@@ -4,9 +4,8 @@ let totalAmount = 0;
 
 // Fungsi kirim WhatsApp
 function kirimPesanKeWA() {
- const namaInput = document.getElementById("nama-pemesan").value.trim();
-const nomorInput = document.getElementById("nomor-hp").value.trim();
-
+  const namaInput = document.getElementById("nama-pemesan").value.trim();
+  const nomorInput = document.getElementById("nomor-hp").value.trim();
 
   // Validasi sederhana
   if (cartItems.length === 0 || namaInput === "" || nomorInput === "") {
@@ -14,23 +13,33 @@ const nomorInput = document.getElementById("nomor-hp").value.trim();
     return;
   }
 
-  // Simpan ke localStorage
-  localStorage.setItem("namaClient", namaInput);
-  localStorage.setItem("nomorClient", nomorInput);
+  // Susun payload yang aman (tanpa harga)
+  const payload = {
+    nama: namaInput,
+    nomor: nomorInput,
+    cart: cartItems.map(item => ({
+      name: item.name,
+      quantity: item.quantity
+    }))
+  };
 
-  let layanan = "";
-  cartItems.forEach(item => {
-    layanan += `(${item.quantity}x) ${item.name} - $${(item.price * item.quantity).toFixed(2)}\n`;
+  // Kirim ke Google Apps Script
+  fetch("https://script.google.com/macros/s/AKfycbx90i4i_OmAtwGkfXDWaeIU6KfIYCEqxe0ra33pBXzBqKkvWm4uiAF9JMETvgyR576c/exec", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+  .then(res => res.text())
+  .then(text => {
+    alert("Pesanan berhasil dikirim!\n" + text);
+    // Bisa redirect ke WhatsApp kalau mau, atau tunggu konfirmasi dulu
+  })
+  .catch(err => {
+    console.error("Gagal kirim data:", err);
+    alert("Gagal kirim pesanan. Silakan coba lagi.");
   });
-
-  localStorage.setItem("layanan", layanan);
-  localStorage.setItem("totalHarga", totalAmount.toFixed(2));
-
-  const pesan = `Halo, saya ${namaInput} (${nomorInput}) ingin menggunakan layanan berikut:\n\n${layanan}\nTotal estimasi biaya: $${totalAmount.toFixed(2)}\n\nTolong hubungi saya ya. Terima kasih!`;
-
-  const nomorWO = "6281221723953";
-  const url = `https://wa.me/${nomorWO}?text=${encodeURIComponent(pesan)}`;
-  window.location.href = url;
 }
 
 // Semua event dan fungsi DOM dimasukkan setelah dokumen siap
