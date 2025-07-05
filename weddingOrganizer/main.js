@@ -7,6 +7,11 @@ function kirimPesanKeWA() {
   const namaInput = document.getElementById("nama-pemesan").value.trim();
   const nomorInput = document.getElementById("nomor-hp").value.trim();
 
+  let layanan = "";
+cartItems.forEach(item => {
+  layanan += `(${item.quantity}x) ${item.name} - $${(item.price * item.quantity).toFixed(2)}\n`;
+});
+
   // Validasi sederhana
   if (cartItems.length === 0 || namaInput === "" || nomorInput === "") {
     alert("Pastikan layanan, nama, dan nomor HP sudah diisi!");
