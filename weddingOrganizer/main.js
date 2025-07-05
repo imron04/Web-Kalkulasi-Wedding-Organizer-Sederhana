@@ -1,14 +1,19 @@
-// Variabel global agar bisa digunakan di fungsi manapun
+// Variabel global
 let cartItems = [];
 let totalAmount = 0;
 
-// Fungsi kirim WhatsApp
+// Fungsi kirim data ke Google Sheet + SweetAlert
 function kirimPesanKeWA() {
   const namaInput = document.getElementById("nama-pemesan").value.trim();
   const nomorInput = document.getElementById("nomor-hp").value.trim();
 
   if (cartItems.length === 0 || namaInput === "" || nomorInput === "") {
-    alert("Pastikan layanan, nama, dan nomor HP sudah diisi!");
+    Swal.fire({
+      icon: 'warning',
+      title: 'Data belum lengkap!',
+      text: 'Pastikan nama, nomor HP, dan layanan sudah diisi.',
+      confirmButtonColor: '#99a98f'
+    });
     return;
   }
 
@@ -17,24 +22,45 @@ function kirimPesanKeWA() {
     layanan += `(${item.quantity}x) ${item.name} - $${(item.price * item.quantity).toFixed(2)}\n`;
   });
 
-  document.getElementById("form-nama").value = namaInput;
-  document.getElementById("form-nomor").value = nomorInput;
-  document.getElementById("form-layanan").value = layanan;
-  document.getElementById("form-total").value = totalAmount.toFixed(2);
+  const url = "https://script.google.com/macros/s/AKfycbxMrQM5ux3uwIciDZAB4Jn6SYDsIgO2FIH19zzVlAiKMCM84l58nsnl2DyDdXcnopVN/exec" +
+    `?nama=${encodeURIComponent(namaInput)}&nomor=${encodeURIComponent(nomorInput)}&layanan=${encodeURIComponent(layanan)}&total=${encodeURIComponent(totalAmount.toFixed(2))}`;
 
-  const form = document.getElementById("kirim-form");
-  form.action = "https://script.google.com/macros/s/AKfycbxMrQM5ux3uwIciDZAB4Jn6SYDsIgO2FIH19zzVlAiKMCM84l58nsnl2DyDdXcnopVN/exec";
-  form.submit(); // buka tab baru kirim data
+  fetch(url)
+    .then(response => response.json())
+    .then(result => {
+      Swal.fire({
+        icon: 'success',
+        title: 'Data Terkirim!',
+        text: 'Pesanan kamu telah berhasil disimpan.',
+        confirmButtonColor: '#3085d6'
+      });
+
+      // Reset data
+      cartItems = [];
+      totalAmount = 0;
+      document.getElementById("nama-pemesan").value = "";
+      document.getElementById("nomor-hp").value = "";
+      updateCartUI();
+      document.getElementById('sidebar').classList.remove('open');
+    })
+    .catch(error => {
+      console.error("Gagal kirim data:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Terkirim!',
+        text: 'Coba lagi beberapa saat lagi.',
+        confirmButtonColor: '#d33'
+      });
+    });
 }
 
-
-
-// Semua event dan fungsi DOM dimasukkan setelah dokumen siap
+// Saat DOM siap
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById("kirim-btn");
   if (btn) {
     btn.addEventListener("click", kirimPesanKeWA);
   }
+
   const addCartButtons = document.querySelectorAll('.add--to--cart');
   const cartItemCount = document.querySelector('.cart-icon span');
   const cartItemList = document.querySelector('.cart-items');
@@ -43,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.getElementById('sidebar');
   const closeButton = document.querySelector('.sidebar-close');
 
-  // Event tombol tambah ke keranjang
   addCartButtons.forEach((button) => {
     button.addEventListener('click', () => {
       const card = button.closest('.card');
@@ -70,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Update UI keranjang
   function updateCartUI() {
     updateCartItemCount(cartItems.length);
     updateCartItemList();
@@ -98,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
       cartItemList.appendChild(cartItem);
     });
 
-    // Tombol hapus item
     const removeButtons = document.querySelectorAll('.remove-item');
     removeButtons.forEach(button => {
       button.addEventListener('click', (event) => {
@@ -118,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
     cartTotal.textContent = `$${totalAmount.toFixed(2)}`;
   }
 
-  // Buka tutup sidebar keranjang
   cartIcon.addEventListener('click', () => {
     sidebar.classList.toggle('open');
   });
@@ -127,10 +149,3 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebar.classList.remove('open');
   });
 });
-
-
-
-
-
-
-
