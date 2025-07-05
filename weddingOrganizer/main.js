@@ -28,7 +28,7 @@ const nomorInput = document.getElementById("nomor-hp").value.trim();
 
   const pesan = `Halo, saya ${namaInput} (${nomorInput}) ingin menggunakan layanan berikut:\n\n${layanan}\nTotal estimasi biaya: $${totalAmount.toFixed(2)}\n\nTolong hubungi saya ya. Terima kasih!`;
 
-  const nomorWO = "6281223723953";
+  const nomorWO = "6281221723953";
   const url = `https://wa.me/${nomorWO}?text=${encodeURIComponent(pesan)}`;
   window.location.href = url;
 }
