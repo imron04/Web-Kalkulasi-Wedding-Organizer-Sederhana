@@ -23,7 +23,7 @@ function kirimPesanKeWA() {
   document.getElementById("form-total").value = totalAmount.toFixed(2);
 
   const form = document.getElementById("kirim-form");
-  form.action = "https://script.google.com/macros/library/d/1wBkpqE2jBWbGvaZpvMbuCYWflzcXOrhBJ4XDwbgaZEU-jgPWjBb1JHpF/2";
+  form.action = "https://script.google.com/macros/s/AKfycbxMrQM5ux3uwIciDZAB4Jn6SYDsIgO2FIH19zzVlAiKMCM84l58nsnl2DyDdXcnopVN/exec";
   form.submit(); // buka tab baru kirim data
 }
 
