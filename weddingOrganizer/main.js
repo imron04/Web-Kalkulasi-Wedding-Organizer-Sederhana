@@ -35,7 +35,10 @@ const nomorInput = document.getElementById("nomor-hp").value.trim();
 
 // Semua event dan fungsi DOM dimasukkan setelah dokumen siap
 document.addEventListener('DOMContentLoaded', () => {
-document.getElementById("kirim-btn").addEventListener("click", kirimPesanKeWA);
+  const btn = document.getElementById("kirim-btn");
+  if (btn) {
+    btn.addEventListener("click", kirimPesanKeWA);
+  }
   const addCartButtons = document.querySelectorAll('.add--to--cart');
   const cartItemCount = document.querySelector('.cart-icon span');
   const cartItemList = document.querySelector('.cart-items');
