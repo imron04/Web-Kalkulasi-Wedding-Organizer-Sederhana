@@ -99,9 +99,15 @@ function kirimPesanKeSheets() {
   const namaInput = document.getElementById("nama-pemesan").value.trim();
   const nomorInput = document.getElementById("nomor-hp").value.trim();
 
+  // Validasi data kosong - tutup modal langsung dan tampilkan alert
   if (cartItems.length === 0 || namaInput === "" || nomorInput === "") {
     isSubmitting = false;
-    Swal.fire({ icon: 'warning', title: 'Data belum lengkap', text: 'Silakan isi nama, nomor HP, dan pilih layanan.' });
+    closeCartModal(); // Tutup modal segera
+    Swal.fire({ 
+      icon: 'warning', 
+      title: 'Data belum lengkap', 
+      text: 'Silakan isi nama, nomor HP, dan pilih layanan.' 
+    });
     return;
   }
 
@@ -130,9 +136,6 @@ function kirimPesanKeSheets() {
     submitBtn.innerHTML = 'Mengirim...';
   }
 
-  // TUTUP MODAL SEBELUM KIRIM DATA
-  closeCartModal();
-
   const xhr = new XMLHttpRequest();
   xhr.open('GET', url);
   
@@ -147,23 +150,29 @@ function kirimPesanKeSheets() {
     try {
       const res = JSON.parse(xhr.responseText);
       if (res.status === "success") {
+        // Tampilkan alert sukses dulu
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
-          text: res.message,
-          didClose: () => {
-            // Reset form setelah alert ditutup
-            cartItems = [];
-            totalAmount = 0;
-            document.getElementById("nama-pemesan").value = "";
-            document.getElementById("nomor-hp").value = "";
-            updateCartUI();
-          }
+          text: res.message
         });
+        
+        // Tunggu 2 detik baru tutup modal dan reset form
+        setTimeout(() => {
+          closeCartModal();
+          cartItems = [];
+          totalAmount = 0;
+          document.getElementById("nama-pemesan").value = "";
+          document.getElementById("nomor-hp").value = "";
+          updateCartUI();
+        }, 2000);
+        
       } else {
+        closeCartModal(); // Tutup modal langsung jika error
         throw new Error(res.message || 'Terjadi kesalahan');
       }
     } catch (error) {
+      closeCartModal(); // Tutup modal langsung jika error
       Swal.fire({
         icon: 'error',
         title: 'Gagal',
@@ -180,6 +189,7 @@ function kirimPesanKeSheets() {
       submitBtn.innerHTML = 'Kirim Pesanan';
     }
     
+    closeCartModal(); // Tutup modal langsung jika error koneksi
     Swal.fire({
       icon: 'error',
       title: 'Gagal',
