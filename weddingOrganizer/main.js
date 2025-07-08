@@ -1,157 +1,236 @@
-// Variabel global agar bisa digunakan di fungsi manapun
+// Data Global
 let cartItems = [];
 let totalAmount = 0;
 
-// Fungsi global untuk update cart
+// Format Rupiah
+function formatRupiah(amount) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR'
+  }).format(amount);
+}
+
+// Update UI Keranjang
 function updateCartUI() {
-  updateCartItemCount(cartItems.length);
-  updateCartItemList();
-  updateCartTotal();
-}
-
-function updateCartItemCount(count) {
-  const cartItemCount = document.querySelector('.cart-icon span');
-  cartItemCount.textContent = count;
-}
-
-function updateCartItemList() {
   const cartItemList = document.querySelector('.cart-items');
+  const cartTotal = document.getElementById('cart-total');
+  const cartCount = document.querySelector('.cart-icon span');
+
+  // Kosongkan isi sebelumnya
   cartItemList.innerHTML = '';
+
+  // Tampilkan ulang item
   cartItems.forEach((item, index) => {
-    const cartItem = document.createElement('div');
-    cartItem.classList.add('cart-item', 'individual-cart-item');
-    cartItem.innerHTML = `
+    const div = document.createElement('div');
+    div.className = 'individual-cart-item cart-item';
+    div.innerHTML = `
       <span>(${item.quantity}x) ${item.name}</span>
       <span class="cart-item-price">
-        $${(item.price * item.quantity).toFixed(2)}
+        ${formatRupiah(item.price * item.quantity)}
         <button class="remove-item" data-index="${index}">
           <i class="fa-solid fa-times"></i>
         </button>
       </span>
     `;
-    cartItemList.appendChild(cartItem);
+    cartItemList.appendChild(div);
   });
 
-  // Tombol hapus item
-  const removeButtons = document.querySelectorAll('.remove-item');
-  removeButtons.forEach(button => {
-    button.addEventListener('click', (event) => {
-      const index = parseInt(event.currentTarget.dataset.index);
+  // Update total & count
+  cartTotal.textContent = formatRupiah(totalAmount);
+  cartCount.textContent = cartItems.length;
+
+  // Hitung Fee 15% dan Grand Total
+  const fee = totalAmount * 0.15;
+  const grandTotal = totalAmount + fee;
+
+  const feeTotal = document.getElementById('fee-total');
+  const grandTotalEl = document.getElementById('grand-total');
+
+  if (feeTotal && grandTotalEl) {
+    feeTotal.textContent = formatRupiah(fee);
+    grandTotalEl.textContent = formatRupiah(grandTotal);
+  }
+
+  // Fungsi hapus item
+  document.querySelectorAll('.remove-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const index = e.currentTarget.dataset.index;
       removeItemFromCart(index);
     });
   });
 }
 
-function removeItemFromCart(index) {
-  const removedItem = cartItems.splice(index, 1)[0];
-  totalAmount -= removedItem.price * removedItem.quantity;
+// Tambahkan item ke keranjang
+function addToCart(name, price) {
+  const existingItem = cartItems.find(item => item.name === name);
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    cartItems.push({ name, price, quantity: 1 });
+  }
+  totalAmount += price;
   updateCartUI();
 }
 
-function updateCartTotal() {
-  const cartTotal = document.querySelector('.cart-total');
-  cartTotal.textContent = `$${totalAmount.toFixed(2)}`;
+// Hapus item dari keranjang
+function removeItemFromCart(index) {
+  const item = cartItems[index];
+  totalAmount -= item.price * item.quantity;
+  cartItems.splice(index, 1);
+  updateCartUI();
 }
 
-// Fungsi kirim data ke Google Sheets
-function kirimPesanKeWA() {
+// Buka modal keranjang
+function openCartModal() {
+  document.getElementById('cart-modal').classList.add('show');
+}
+
+// Tutup modal keranjang
+function closeCartModal() {
+  document.getElementById('cart-modal').classList.remove('show');
+}
+
+let isSubmitting = false;
+// Kirim data ke Google Sheets
+function kirimPesanKeSheets() {
+  if (isSubmitting) return;
+  isSubmitting = true;
+  
   const namaInput = document.getElementById("nama-pemesan").value.trim();
   const nomorInput = document.getElementById("nomor-hp").value.trim();
 
   if (cartItems.length === 0 || namaInput === "" || nomorInput === "") {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Data belum lengkap',
-      text: 'Silakan isi nama, nomor HP, dan pilih layanan.',
-      confirmButtonColor: '#99a98f'
-    });
+    isSubmitting = false;
+    Swal.fire({ icon: 'warning', title: 'Data belum lengkap', text: 'Silakan isi nama, nomor HP, dan pilih layanan.' });
     return;
   }
 
+  const fee = Math.round(totalAmount * 0.15);
+  const grandTotal = totalAmount + fee;
+
   let layanan = "";
   cartItems.forEach(item => {
-    layanan += `(${item.quantity}x) ${item.name} - $${(item.price * item.quantity).toFixed(2)}\n`;
+    const totalPrice = item.price * item.quantity;
+    layanan += `(${item.quantity}x) ${item.name} - Rp${totalPrice}\n`;
   });
 
-  const url = "https://script.google.com/macros/s/AKfycbxMrQM5ux3uwIciDZAB4Jn6SYDsIgO2FIH19zzVlAiKMCM84l58nsnl2DyDdXcnopVN/exec" +
-              `?nama=${encodeURIComponent(namaInput)}&nomor=${encodeURIComponent(nomorInput)}&layanan=${encodeURIComponent(layanan)}&total=${encodeURIComponent(totalAmount.toFixed(2))}`;
+  const params = new URLSearchParams();
+  params.append('nama', namaInput);
+  params.append('nomor', nomorInput);
+  params.append('layanan', layanan.trim());
+  params.append('total', totalAmount);
+  params.append('fee', fee);
+  params.append('grand', grandTotal);
 
-  fetch(url)
-    .then(response => response.json())
-    .then(result => {
-      Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: 'Data berhasil dikirim ke Google Sheets.',
-        confirmButtonColor: '#99a98f'
-      });
+  const url = `https://script.google.com/macros/s/AKfycbxtTXYDpFa0QOQc5cHbbL3e1ZQZMmfDY3QbZBEGndcO_4KoinazZg5aIMWGjHCDScuL/exec?${params.toString()}`;
+  const submitBtn = document.getElementById('kirim-btn');
+  
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'Mengirim...';
+  }
 
-      // Reset keranjang & form
-      cartItems = [];
-      totalAmount = 0;
-      document.getElementById("nama-pemesan").value = "";
-      document.getElementById("nomor-hp").value = "";
-      updateCartUI();
+  // TUTUP MODAL SEBELUM KIRIM DATA
+  closeCartModal();
 
-      // Tutup sidebar
-      document.getElementById('sidebar').classList.remove('open');
-    })
-    .catch(error => {
-      console.error("Gagal kirim data:", error);
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', url);
+  
+  xhr.onload = function() {
+    isSubmitting = false;
+    
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Kirim Pesanan';
+    }
+
+    try {
+      const res = JSON.parse(xhr.responseText);
+      if (res.status === "success") {
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: res.message,
+          didClose: () => {
+            // Reset form setelah alert ditutup
+            cartItems = [];
+            totalAmount = 0;
+            document.getElementById("nama-pemesan").value = "";
+            document.getElementById("nomor-hp").value = "";
+            updateCartUI();
+          }
+        });
+      } else {
+        throw new Error(res.message || 'Terjadi kesalahan');
+      }
+    } catch (error) {
       Swal.fire({
         icon: 'error',
         title: 'Gagal',
-        text: 'Gagal mengirim data ke Google Sheets.',
-        confirmButtonColor: '#d33'
+        html: `<div>${error.message}</div>`
       });
+    }
+  };
+  
+  xhr.onerror = function() {
+    isSubmitting = false;
+    
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Kirim Pesanan';
+    }
+    
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal',
+      html: `
+        <div>Tidak dapat terhubung ke server</div>
+        <small>
+          <a href="${url}" target="_blank">Klik di sini</a> untuk kirim manual.
+        </small>`
     });
+  };
+  
+  xhr.send();
 }
 
-// Inisialisasi setelah dokumen siap
+// ========== DOM Loaded ==========
 document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById("kirim-btn");
-  if (btn) {
-    btn.addEventListener("click", kirimPesanKeWA);
-  }
-
-  const addCartButtons = document.querySelectorAll('.add--to--cart');
-  const cartIcon = document.querySelector('.cart-icon');
-  const sidebar = document.getElementById('sidebar');
-  const closeButton = document.querySelector('.sidebar-close');
-
-  // Event tombol tambah ke keranjang
-  addCartButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      const card = button.closest('.card');
-      const itemName = card.querySelector('.card--title').textContent;
-      const itemPriceText = card.querySelector('.price').textContent;
-      const itemPrice = parseFloat(itemPriceText.replace('$', ''));
-
-      if (isNaN(itemPrice)) return;
-
-      const existingItem = cartItems.find(cartItem => cartItem.name === itemName);
-
-      if (existingItem) {
-        existingItem.quantity++;
-      } else {
-        cartItems.push({
-          name: itemName,
-          price: itemPrice,
-          quantity: 1
-        });
-      }
-
-      totalAmount += itemPrice;
-      updateCartUI();
+  // Tambah ke keranjang
+  document.querySelectorAll('.add-to-cart').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.card');
+      const name = card.querySelector('.card-title').textContent;
+      const priceText = card.querySelector('.price').getAttribute('data-price');
+      const price = parseInt(priceText);
+      addToCart(name, price);
     });
   });
 
-  // Sidebar toggle
-  cartIcon.addEventListener('click', () => {
-    sidebar.classList.toggle('open');
-  });
+  // Tombol buka keranjang
+  const cartBtn = document.getElementById('cart-btn');
+  if (cartBtn) cartBtn.addEventListener('click', openCartModal);
 
-  closeButton.addEventListener('click', () => {
-    sidebar.classList.remove('open');
-  });
+  // Tombol tutup keranjang
+  const closeCart = document.querySelector('.close-cart');
+  if (closeCart) closeCart.addEventListener('click', closeCartModal);
+
+  // Tombol kirim
+  const kirimBtn = document.getElementById('kirim-btn');
+  if (kirimBtn) kirimBtn.addEventListener('click', kirimPesanKeSheets);
+
+  // Burger menu toggle (mobile)
+  const burgerBtn = document.getElementById('burger-btn');
+  const sidebar = document.getElementById('mobile-sidebar');
+  const closeSidebar = document.getElementById('close-sidebar');
+
+  if (burgerBtn && sidebar && closeSidebar) {
+    burgerBtn.addEventListener('click', () => {
+      sidebar.classList.add('open');
+    });
+
+    closeSidebar.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+    });
+  }
 });
