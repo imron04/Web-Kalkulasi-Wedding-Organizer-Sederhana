@@ -165,7 +165,7 @@ function kirimPesanKeSheets() {
           document.getElementById("nama-pemesan").value = "";
           document.getElementById("nomor-hp").value = "";
           updateCartUI();
-        }, 2000);
+        }, 1000);
         
       } else {
         closeCartModal(); // Tutup modal langsung jika error
